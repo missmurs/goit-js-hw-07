@@ -1,20 +1,43 @@
 import { galleryItems } from "./gallery-items.js";
 
-console.log(galleryItems);
-document.addEventListener("DOMContentLoaded", function () {
-  const gallery = document.querySelector(".gallery");
-  const modal = basicLightbox.create(document.getElementById("modal"));
-  gallery.addEventListener("click", function (e) {
-    e.preventDefault();
-    if (e.target.classList.contains("gallery__image")) {
-      const imageUrl = e.target.dataset.source;
-      document.getElementById("modal-image").src = imageUrl;
-      modal.show();
+const container = document.querySelector(".gallery");
+container.insertAdjacentHTML("beforeend", createMarkup(galleryItems));
+container.addEventListener("click", handleClick);
+
+function createMarkup(arr) {
+  return arr
+    .map(
+      ({ preview, original, description }) => `
+      <li class="gallery__item">
+        <a class="gallery__link" href="${original}">
+          <img class="gallery__image" src="${preview}" data-source="${original}" alt="${description}">
+        </a>
+      </li>
+    `
+    )
+    .join("");
+}
+
+function handleClick(event) {
+  event.preventDefault();
+
+  if (event.target === event.currentTarget) {
+    return;
+  }
+
+  const modalImg = event.target.closest(".gallery__link").getAttribute("href");
+  const instance = basicLightbox.create(`
+    <img class="gallery__image" src="${modalImg}" alt="">
+  `);
+
+  instance.show();
+
+  document.addEventListener("keydown", handleKeyPress);
+
+  function handleKeyPress(event) {
+    if (event.code === "Escape") {
+      instance.close();
+      document.removeEventListener("keydown", handleKeyPress);
     }
-  });
-  document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && modal.visible()) {
-      modal.close();
-    }
-  });
-});
+  }
+}
